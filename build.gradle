@@ -101,7 +101,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.15.2-31.2.19'
 
     compile 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
-    if(isReleaseVersion){
+    if(!isReleaseVersion){
         shade 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
     }
 }
@@ -131,7 +131,6 @@ reobf {
 }
 
 task signJar {
-/*
     doLast {
         configurations.archives.allArtifacts.files.each {
            if(it.name.endsWith(".jar")){
@@ -148,7 +147,7 @@ task signJar {
 				project.logger.lifecycle("JAR Signed: " + it.name)
 			}
        }
-    }*/
+    }
 }
 
 build.dependsOn signJar
