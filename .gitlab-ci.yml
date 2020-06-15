@@ -32,8 +32,7 @@ build:
   only:
     variables:
         - $BUILD_MAVEN != "publish"
-  except:
-  - merge_requests
+  except: [merge_requests]
   artifacts:
     paths:
       - build/libs/
