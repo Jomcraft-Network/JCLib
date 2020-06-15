@@ -14,6 +14,8 @@ public class ConfigFile {
 
 		public final ForgeConfigSpec.ConfigValue<String> hostIP;
 		
+		public final ForgeConfigSpec.BooleanValue connect;
+		
 		public final ForgeConfigSpec.ConfigValue<String> username;
 		
 		public final ForgeConfigSpec.ConfigValue<String> password;
@@ -28,6 +30,9 @@ public class ConfigFile {
 
 			String desc = "MariaDB server host ip";
 			hostIP = builder.comment(desc).define("hostIP", "localhost");
+			
+			desc = "Should the server connect to the database on startup?";
+			connect = builder.comment(desc).define("connect", false);
 			
 			desc = "MariaDB server username";
 			username = builder.comment(desc).define("username", "JCLib");

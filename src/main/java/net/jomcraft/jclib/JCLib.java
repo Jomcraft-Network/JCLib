@@ -1,8 +1,15 @@
 package net.jomcraft.jclib;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.electronwill.nightconfig.core.CommentedConfig;
+import com.electronwill.nightconfig.toml.TomlParser;
+
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -15,7 +22,8 @@ public class JCLib {
 
 	public static final String MODID = "jclib";
 	public static final Logger log = LogManager.getLogger(JCLib.MODID);
-	public static final String VERSION = "1.0.0";
+	public static final String VERSION = getModVersion();
+	public static boolean databaseInitialized = false;
 	public static MySQL mysql;
 	public static JCLib instance;
 	
@@ -28,18 +36,30 @@ public class JCLib {
 	}
 	
 	public void postInit(FMLLoadCompleteEvent event) {
-		JCLib.connectMySQL();
+		if(ConfigFile.COMMON.connect.get())
+			JCLib.connectMySQL();
 	}
 	
 	public static void connectMySQL() {
 		try {
 			
 			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
-
+			databaseInitialized = true;
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static String getModVersion() {
+		//Stupid FG 3 workaround
+		TomlParser parser = new TomlParser();
+		InputStream stream = JCLib.class.getClassLoader().getResourceAsStream("META-INF/mods.toml");
+		CommentedConfig file = parser.parse(stream);
+
+		return ((ArrayList<CommentedConfig>) file.get("mods")).get(0).get("version");
 	}
 	
 	public static JCLib getInstance() {
