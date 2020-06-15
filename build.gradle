@@ -131,7 +131,7 @@ reobf {
 }
 
 task signJar {
-	if(project.hasProperty("signing.alias")){
+	if(project.property("signing.alias") != null || !project.property("signing.alias").equals("")){
 
     	doLast {
         	configurations.archives.allArtifacts.files.each {
@@ -197,7 +197,8 @@ tasks.build.dependsOn reobfShadowJar
 jar.finalizedBy('reobfJar')
 
 curseforge {
-  if(project.hasProperty("cursegradle.api_token")) {
+
+  if(project.property("cursegradle.api_token") != null || !project.property("cursegradle.api_token").equals("")) {
   	apiKey = project.property("cursegradle.api_token")
   	project {
     	id = '389876'
@@ -224,7 +225,7 @@ curseforge {
 }
 
 uploadArchives {
-if(project.hasProperty("ossrhUsername")) {
+if(project.property("ossrhUsername") != null || !project.property("ossrhUsername").equals("")) {
   	repositories {
     	mavenDeployer {
       	beforeDeployment { MavenDeployment mvnd ->
