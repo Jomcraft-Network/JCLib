@@ -1,0 +1,271 @@
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+    }
+}
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.4'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
+    id "maven-publish"
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+version = "1.15.2-1.0.0"
+def fileVersion = "1.0.0"
+
+group= "net.jomcraft.jclib"
+ext.isReleaseVersion = project.hasProperty("isSonaType") ? isSonaType : false
+
+archivesBaseName = "JCLib"
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+minecraft {
+    mappings channel: 'snapshot', version: '20200514-1.15.1'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.console.level', 'debug'
+
+            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/')
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+processResources {
+    inputs.property "version", fileVersion
+
+    from(sourceSets.main.resources.srcDirs) {
+        include '**/*.toml'
+
+        expand 'version': fileVersion
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude '**/*.toml'
+    }
+}
+
+configurations {
+    shade
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.15.2-31.2.19'
+
+    compile 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
+    if(isReleaseVersion){
+        shade 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "JCLib",
+            "Specification-Vendor": "Jomcraft Network",
+            "Specification-Version": fileVersion,
+            "Implementation-Title": "JCLib",
+            "Implementation-Version": fileVersion,
+            "Implementation-Vendor" : "Jomcraft Network",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+        ])
+    }
+}
+
+shadowJar {
+    classifier = ''
+    configurations = [project.configurations.shade]
+    relocate 'org.mariadb.jdbc', "net.jomcraft.org.mariadb.jdbc"
+}
+
+reobf {
+    shadowJar { }
+}
+
+task signJar {
+/*
+    doLast {
+        configurations.archives.allArtifacts.files.each {
+           if(it.name.endsWith(".jar")){
+            	ant.signjar(
+                	jar: it,
+					storetype:"jks",
+					alias: project.property("signing.alias"),
+                	storepass:project.property("signing.keyStorePassword"),
+                	keystore: project.property("signing.keystorePath"),
+                	keypass: project.property("signing.keyStorePassword"),
+                	preservelastmodified:"true"
+            	)
+            	signing.sign(it)
+				project.logger.lifecycle("JAR Signed: " + it.name)
+			}
+       }
+    }*/
+}
+
+build.dependsOn signJar
+
+uploadArchives.dependsOn signJar
+
+signing {
+	if(isReleaseVersion)
+    	sign configurations.archives
+}
+
+task sourcesJar(type: Jar) {
+	
+	from sourceSets.main.allSource
+	classifier = 'sources'
+}
+
+task deobfJar(type: Jar) {
+	
+	from sourceSets.main.output
+	classifier = 'deobf'
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+artifacts {
+    archives shadowJar
+    archives sourcesJar
+	archives deobfJar
+	if(isReleaseVersion)
+		archives javadocJar
+}
+
+tasks.build.dependsOn reobfShadowJar
+
+jar.finalizedBy('reobfJar')
+
+curseforge {
+
+  apiKey = project.property("cursegradle.api_token")
+  project {
+    id = '389876'
+    releaseType = 'release'
+    addGameVersion '1.15.2'
+    addGameVersion '1.15.1'
+    addGameVersion '1.15'
+    mainArtifact(jar) {
+    	displayName = "$archivesBaseName-$version"
+    }
+    
+    addArtifact (sourcesJar) {
+    	releaseType = 'release'
+    	displayName = "$archivesBaseName-$version-sources"
+    }
+    
+    addArtifact (deobfJar) {
+    	releaseType = 'release'
+    	displayName = "$archivesBaseName-$version-deobf"
+    }
+    
+  }
+
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment mvnd ->
+               signing.signPom(mvnd)
+	  }
+
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      pom.project {
+        name 'JCLib'
+        packaging 'jar'
+		artifactId 'JCLib-1.15.2'
+        version fileVersion
+        description 'https://github.com/JCLib-GH/'
+        url 'https://github.com/JCLib-GH/JCLib-GH'
+
+        scm {
+        	connection 'https://github.com/JCLib-GH/JCLib-GH.git'
+        	developerConnection 'https://github.com/JCLib-GH/JCLib-GH.git'
+        	url 'https://github.com/JCLib-GH/JCLib-GH'
+        }
+
+
+        licenses {
+          license {
+            name 'GNU Lesser General Public License version 2.1 (LGPLv2.1)'
+            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html'
+          }
+        }
+
+        developers {
+          developer {
+            id 'PT400C'
+            name 'Rolf Marker'
+            email 'pt400c@gmail.com'
+          }
+          developer {
+            id 'Compaszer'
+            name 'Joel Marker'
+            email 'compaszer@gmail.com'
+          }
+        }
+      }
+    }
+  }
+}

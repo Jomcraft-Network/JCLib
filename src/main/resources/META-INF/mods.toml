@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[31,)"
+issueTrackerURL="https://gitlab.com/jomcraft-sources/JCLib/-/issues"
+
+[[mods]]
+modId="jclib"
+version="${version}"
+displayName="JCLib"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/jclib"
+credits="Full credits for this project go to the developers of MariaDB and the Jomcraft Network team"
+authors="Compaszer, PT400C and the MariaDB development team"
+description='''
+JCLib is the default library the projects developed by the Jomcraft Network team use.
+As a consequence it does nothing on it's own, though is required by certain other mods.
+'''
+
+[[dependencies.jclib]]
+    modId="forge"
+    mandatory=true
+    versionRange="[31,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.jclib]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.15.2]"
+    ordering="NONE"
+    side="BOTH"
