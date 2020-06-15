@@ -32,7 +32,6 @@ build:
   only:
     variables:
         - $BUILD_MAVEN != "publish"
-  except: [merge_requests]
   artifacts:
     paths:
       - build/libs/
@@ -45,8 +44,6 @@ curseforge:
   only:
     variables:
         - $BUILD_MAVEN == "curseforge"
-  except:
-  - merge_requests
   artifacts:
     paths:
       - build/libs/
@@ -60,8 +57,6 @@ maven:
   only:
     variables:
         - $BUILD_MAVEN == "publish"
-  except:
-  - merge_requests
   artifacts:
     paths:
       - build/libs/
