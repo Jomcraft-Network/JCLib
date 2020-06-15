@@ -131,22 +131,30 @@ reobf {
 }
 
 task signJar {
-    doLast {
-        configurations.archives.allArtifacts.files.each {
-           if(it.name.endsWith(".jar")){
-            	ant.signjar(
-                	jar: it,
-					storetype:"jks",
-					alias: project.property("signing.alias"),
-                	storepass:project.property("signing.keyStorePassword"),
-                	keystore: project.property("signing.keystorePath"),
-                	keypass: project.property("signing.keyStorePassword"),
-                	preservelastmodified:"true"
-            	)
-            	signing.sign(it)
-				project.logger.lifecycle("JAR Signed: " + it.name)
-			}
-       }
+	if(project.hasProperty("signing.alias")){
+
+    	doLast {
+        	configurations.archives.allArtifacts.files.each {
+           		if(it.name.endsWith(".jar")){
+            		ant.signjar(
+                		jar: it,
+						storetype:"jks",
+						alias: project.property("signing.alias"),
+                		storepass:project.property("signing.keyStorePassword"),
+                		keystore: project.property("signing.keystorePath"),
+                		keypass: project.property("signing.keyStorePassword"),
+                		preservelastmodified:"true"
+            		)
+            		signing.sign(it)
+					project.logger.lifecycle("JAR Signed: " + it.name)
+					}
+       		}
+    	}
+    
+    } else {
+    	doLast {
+    		project.logger.lifecycle("Signing skipped, not authorized")
+    	}
     }
 }
 
@@ -189,82 +197,84 @@ tasks.build.dependsOn reobfShadowJar
 jar.finalizedBy('reobfJar')
 
 curseforge {
-
-  apiKey = project.property("cursegradle.api_token")
-  project {
-    id = '389876'
-    releaseType = 'release'
-    addGameVersion '1.15.2'
-    addGameVersion '1.15.1'
-    addGameVersion '1.15'
-    mainArtifact(jar) {
-    	displayName = "$archivesBaseName-$version"
-    }
-    
-    addArtifact (sourcesJar) {
+  if(project.hasProperty("cursegradle.api_token")) {
+  	apiKey = project.property("cursegradle.api_token")
+  	project {
+    	id = '389876'
     	releaseType = 'release'
-    	displayName = "$archivesBaseName-$version-sources"
-    }
+    	addGameVersion '1.15.2'
+    	addGameVersion '1.15.1'
+    	addGameVersion '1.15'
+    	mainArtifact(jar) {
+    		displayName = "$archivesBaseName-$version"
+    	}
     
-    addArtifact (deobfJar) {
-    	releaseType = 'release'
-    	displayName = "$archivesBaseName-$version-deobf"
-    }
+    	addArtifact (sourcesJar) {
+    		releaseType = 'release'
+    		displayName = "$archivesBaseName-$version-sources"
+    	}
     
+    	addArtifact (deobfJar) {
+    		releaseType = 'release'
+    		displayName = "$archivesBaseName-$version-deobf"
+    	}
+    
+  	}
   }
-
 }
 
 uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment { MavenDeployment mvnd ->
-               signing.signPom(mvnd)
-	  }
+if(project.hasProperty("ossrhUsername")) {
+  	repositories {
+    	mavenDeployer {
+      	beforeDeployment { MavenDeployment mvnd ->
+               	signing.signPom(mvnd)
+	  	}
 
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
+      	repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        	authentication(userName: ossrhUsername, password: ossrhPassword)
+      	}
 
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
+      	snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        	authentication(userName: ossrhUsername, password: ossrhPassword)
+      	}
 
-      pom.project {
-        name 'JCLib'
-        packaging 'jar'
-		artifactId 'JCLib-1.15.2'
-        version fileVersion
-        description 'https://github.com/JCLib-GH/'
-        url 'https://github.com/JCLib-GH/JCLib-GH'
-
-        scm {
-        	connection 'https://github.com/JCLib-GH/JCLib-GH.git'
-        	developerConnection 'https://github.com/JCLib-GH/JCLib-GH.git'
+      	pom.project {
+        	name 'JCLib'
+        	packaging 'jar'
+			artifactId 'JCLib-1.15.2'
+        	version fileVersion
+        	description 'https://github.com/JCLib-GH/'
         	url 'https://github.com/JCLib-GH/JCLib-GH'
-        }
+
+        	scm {
+        		connection 'https://github.com/JCLib-GH/JCLib-GH.git'
+        		developerConnection 'https://github.com/JCLib-GH/JCLib-GH.git'
+        		url 'https://github.com/JCLib-GH/JCLib-GH'
+        	}
 
 
-        licenses {
-          license {
-            name 'GNU Lesser General Public License version 2.1 (LGPLv2.1)'
-            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html'
-          }
-        }
+        	licenses {
+          	license {
+            	name 'GNU Lesser General Public License version 2.1 (LGPLv2.1)'
+            	url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html'
+          	}
+        	}
 
-        developers {
-          developer {
-            id 'PT400C'
-            name 'Rolf Marker'
-            email 'pt400c@gmail.com'
+        	developers {
+          	developer {
+            	id 'PT400C'
+            	name 'Rolf Marker'
+            	email 'pt400c@gmail.com'
+          	}
+          	developer {
+            	id 'Compaszer'
+            	name 'Joel Marker'
+            	email 'compaszer@gmail.com'
+          	}
           }
-          developer {
-            id 'Compaszer'
-            name 'Joel Marker'
-            email 'compaszer@gmail.com'
-          }
-        }
+      	}
       }
-    }
+  	}
   }
 }
