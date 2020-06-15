@@ -2,18 +2,20 @@ package net.jomcraft.jclib;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.network.FMLNetworkConstants;
 
 @Mod(value = JCLib.MODID)
 public class JCLib {
@@ -29,12 +31,21 @@ public class JCLib {
 		instance = this;
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigFile.COMMON_SPEC);
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
-		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> "OHNOES\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31\uD83D\uDE31", (test2, test) -> true));
+		
+		final String any = FMLNetworkConstants.IGNORESERVERONLY;
+		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> any, (test2, test) -> true));
 	}
 	
 	public void postInit(FMLLoadCompleteEvent event) {
-		if(ConfigFile.COMMON.connect.get())
-			JCLib.connectMySQL();
+		if (ConfigFile.COMMON.only_server.get()) {
+			DistExecutor.safeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+				if (ConfigFile.COMMON.connect.get())
+					JCLib.connectMySQL();
+			});
+		} else {
+			if (ConfigFile.COMMON.connect.get())
+				JCLib.connectMySQL();
+		}
 	}
 	
 	public static void connectMySQL() {
@@ -52,9 +63,9 @@ public class JCLib {
 	@SuppressWarnings("unchecked")
 	public static String getModVersion() {
 		//Stupid FG 3 workaround
-		TomlParser parser = new TomlParser();
-		InputStream stream = JCLib.class.getClassLoader().getResourceAsStream("META-INF/mods.toml");
-		CommentedConfig file = parser.parse(stream);
+		final TomlParser parser = new TomlParser();
+		final InputStream stream = JCLib.class.getClassLoader().getResourceAsStream("META-INF/mods.toml");
+		final CommentedConfig file = parser.parse(stream);
 
 		return ((ArrayList<CommentedConfig>) file.get("mods")).get(0).get("version");
 	}

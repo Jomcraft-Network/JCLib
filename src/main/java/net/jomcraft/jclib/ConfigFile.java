@@ -16,6 +16,8 @@ public class ConfigFile {
 		
 		public final ForgeConfigSpec.BooleanValue connect;
 		
+		public final ForgeConfigSpec.BooleanValue only_server;
+		
 		public final ForgeConfigSpec.ConfigValue<String> username;
 		
 		public final ForgeConfigSpec.ConfigValue<String> password;
@@ -33,6 +35,9 @@ public class ConfigFile {
 			
 			desc = "Should the server connect to the database on startup?";
 			connect = builder.comment(desc).define("connect", false);
+			
+			desc = "Connect on the client-side? (Better do not deactivate this field)";
+			only_server = builder.comment(desc).define("only_server", true);
 			
 			desc = "MariaDB server username";
 			username = builder.comment(desc).define("username", "JCLib");

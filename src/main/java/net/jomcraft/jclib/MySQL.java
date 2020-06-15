@@ -50,9 +50,9 @@ public class MySQL {
 			}
 		}
        
-		public static void update(String qry) {
+		public static void update(final String qry) {
 			try {
-				Statement st = con.createStatement();
+				final Statement st = con.createStatement();
 				st.executeUpdate(qry);
 				st.close();
 			} catch (SQLException e) {
@@ -66,11 +66,11 @@ public class MySQL {
 			}
 		}
        
-		public static ResultSet query(String qry) {
+		public static ResultSet query(final String qry) {
 			ResultSet rs = null;
 
 			try {
-				Statement st = con.createStatement();
+				final Statement st = con.createStatement();
 				rs = st.executeQuery(qry);
 			} catch (SQLException e) {
 
