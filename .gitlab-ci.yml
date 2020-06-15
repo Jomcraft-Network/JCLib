@@ -8,6 +8,7 @@ before_script:
   - chmod +x gradlew
   - echo $GPG_KEY_RING_FILE | base64 -d > /tmp/key
   - echo $JAVA_KEY_FILE | base64 -d > /tmp/key2
+  - export TEST_PASSWORD=echo $ossrhPassword | base64 -d
   - export GRADLE_USER_HOME=`pwd`/.gradle
   - echo "signing.keyId=$GPG_KEY_ID" >> gradle.properties
   - echo "signing.password=$GPG_PASSPHRASE" >> gradle.properties
@@ -17,7 +18,7 @@ before_script:
   - echo "signing.keyStorePassword=$signing_keyStorePassword" >> gradle.properties
   - echo "cursegradle.api_token=$curse_api" >> gradle.properties
   - echo "ossrhUsername=$ossrhUsername" >> gradle.properties
-  - echo "ossrhPassword=$ossrhPassword" >> gradle.properties
+  - echo "ossrhPassword=$TEST_PASSWORD" >> gradle.properties
   
 cache:
   paths:
