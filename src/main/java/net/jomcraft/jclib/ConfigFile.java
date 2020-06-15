@@ -27,13 +27,13 @@ public class ConfigFile {
 			builder.push("Common");
 
 			String desc = "MariaDB server host ip";
-			hostIP = builder.comment(desc).define("hostIP", "88.198.32.34");
+			hostIP = builder.comment(desc).define("hostIP", "localhost");
 			
 			desc = "MariaDB server username";
 			username = builder.comment(desc).define("username", "JCLib");
 			
 			desc = "MariaDB database password";
-			password = builder.comment(desc).define("password", "test1234");
+			password = builder.comment(desc).define("password", "password");
 			
 			desc = "MariaDB server port";
 			port = builder.comment(desc).define("port", "3306");
