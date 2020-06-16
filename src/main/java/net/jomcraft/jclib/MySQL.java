@@ -15,7 +15,7 @@ public class MySQL {
        
         public static Connection con;
        
-        public MySQL(String host, String database, String user, String password) {
+        public MySQL(String host, String database, String user, String password) throws ClassNotFoundException, SQLException {
                 HOST = host;
                 DATABASE = database;
                 USER = user;
@@ -24,18 +24,18 @@ public class MySQL {
                 connect();
         }
  
-		public static void connect() {
+		public static void connect() throws ClassNotFoundException, SQLException {
 			try {
 				try {
 					Class.forName("org.mariadb.jdbc.Driver");
 				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
+					throw e;
 				}
 
 				con = DriverManager.getConnection("jdbc:mariadb://" + HOST + ":" + ConfigFile.COMMON.port.get() + "/" + DATABASE + "?autoReconnect=true&characterEncoding=utf-8", USER, PASSWORD);
 
 			} catch (SQLException e) {
-				e.printStackTrace();
+				throw e;
 			}
 		}
         
@@ -45,18 +45,18 @@ public class MySQL {
 					con.close();
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				JCLib.log.error("Couldn't close the MySQL-connection: ", e);
 			}
 		}
        
-		public static void update(final String qry) {
+		public static void update(final String qry) throws ClassNotFoundException, SQLException {
 			try (final Statement st = con.createStatement()){
 				st.executeUpdate(qry);
 
 			} catch (SQLException e) {
 
 				if (e.getMessage().startsWith("Could not create")) {
-					e.printStackTrace();
+					JCLib.log.error("Couldn't send and update: ", e);
 				} else {
 					connect();
 				}
@@ -64,7 +64,7 @@ public class MySQL {
 			}
 		}
        
-		public static ResultSet query(final String qry) {
+		public static ResultSet query(final String qry) throws ClassNotFoundException, SQLException {
 			ResultSet rs = null;
 
 			try (final Statement st = con.createStatement()){
@@ -72,7 +72,7 @@ public class MySQL {
 			} catch (SQLException e) {
 
 				if (e.getMessage().startsWith("Could not create")) {
-					e.printStackTrace();
+					JCLib.log.error("Couldn't send a query: ", e);
 				} else {
 					connect();
 				}

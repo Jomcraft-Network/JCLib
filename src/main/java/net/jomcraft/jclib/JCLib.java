@@ -1,6 +1,7 @@
 package net.jomcraft.jclib;
 
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -44,6 +45,7 @@ public class JCLib {
 	}
 	
 	public static void communicateLogin(String modid) {
+		JCLib.log.info(modid + " has been added to the tracking system");
 		shutdownState.put(modid, false);
 	}
 	
@@ -55,6 +57,7 @@ public class JCLib {
 				return;
 		}
 		
+		JCLib.log.info("MySQL service shut down");
 		MySQL.close();
 		JCLib.keepaliveTimer.cancel();
 	}
@@ -73,12 +76,12 @@ public class JCLib {
 	
 	public static boolean connectMySQL() {
 		try {
-			
+			JCLib.log.info("Attempting to connect to the MySQL database");
 			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
 			databaseInitialized = true;
 			return true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			JCLib.log.error("Couldn't connect to the MySQL database: ", e);
 		}
 		return false;
 	}
@@ -99,6 +102,7 @@ public class JCLib {
 	
 	public static boolean startKeepAlive(int minutes) {
 		if (!keepaliveActivated) {
+			JCLib.log.info("Activated keep-alive task");
 			keepaliveTimer.scheduleAtFixedRate(new KeepAlive(), minutes * 60 * 1000, minutes * 60 * 1000);
 			keepaliveActivated = true;
 			return true;
@@ -108,7 +112,11 @@ public class JCLib {
 	
 	public static class KeepAlive extends TimerTask {
 		public void run() {
-			MySQL.update("SELECT VERSION();");
+			try {
+				MySQL.update("SELECT VERSION();");
+			} catch (ClassNotFoundException | SQLException e) {
+				JCLib.log.error("Couldn't keep-alive: ", e);
+			}
 		}
 	}
 }
