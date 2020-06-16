@@ -43,7 +43,6 @@ public class MySQL {
 			try {
 				if (con != null) {
 					con.close();
-
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -51,10 +50,9 @@ public class MySQL {
 		}
        
 		public static void update(final String qry) {
-			try {
-				final Statement st = con.createStatement();
+			try (final Statement st = con.createStatement()){
 				st.executeUpdate(qry);
-				st.close();
+
 			} catch (SQLException e) {
 
 				if (e.getMessage().startsWith("Could not create")) {
@@ -69,8 +67,7 @@ public class MySQL {
 		public static ResultSet query(final String qry) {
 			ResultSet rs = null;
 
-			try {
-				final Statement st = con.createStatement();
+			try (final Statement st = con.createStatement()){
 				rs = st.executeQuery(qry);
 			} catch (SQLException e) {
 
@@ -78,7 +75,6 @@ public class MySQL {
 					e.printStackTrace();
 				} else {
 					connect();
-
 				}
 
 			}

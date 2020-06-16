@@ -2,15 +2,16 @@ package net.jomcraft.jclib;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -28,6 +29,7 @@ public class JCLib {
 	public static final String VERSION = getModVersion();
 	public static boolean databaseInitialized = false;
 	public static Timer keepaliveTimer = new Timer();
+	static HashMap<String, Boolean> shutdownState = new HashMap<String, Boolean>();
 	public static boolean keepaliveActivated = false;
 	public static MySQL mysql;
 	public static JCLib instance;
@@ -36,9 +38,25 @@ public class JCLib {
 		instance = this;
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigFile.COMMON_SPEC);
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
-		
+		MinecraftForge.EVENT_BUS.register(new EventHandlers());
 		final String any = FMLNetworkConstants.IGNORESERVERONLY;
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> any, (test2, test) -> true));
+	}
+	
+	public static void communicateLogin(String modid) {
+		shutdownState.put(modid, false);
+	}
+	
+	public static void readyForShutdown(String modid) {
+		shutdownState.put(modid, true);
+		
+		for(boolean state : shutdownState.values()) {
+			if(state == false)
+				return;
+		}
+		
+		MySQL.close();
+		JCLib.keepaliveTimer.cancel();
 	}
 	
 	public void postInit(FMLLoadCompleteEvent event) {
