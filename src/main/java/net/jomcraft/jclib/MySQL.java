@@ -45,7 +45,7 @@ public class MySQL {
 					con.close();
 				}
 			} catch (SQLException e) {
-				JCLib.log.error("Couldn't close the MySQL-connection: ", e);
+				JCLib.getLog().error("Couldn't close the MySQL-connection: ", e);
 			}
 		}
        
@@ -56,7 +56,7 @@ public class MySQL {
 			} catch (SQLException e) {
 
 				if (e.getMessage().startsWith("Could not create")) {
-					JCLib.log.error("Couldn't send and update: ", e);
+					JCLib.getLog().error("Couldn't send and update: ", e);
 				} else {
 					connect();
 				}
@@ -72,7 +72,7 @@ public class MySQL {
 			} catch (SQLException e) {
 
 				if (e.getMessage().startsWith("Could not create")) {
-					JCLib.log.error("Couldn't send a query: ", e);
+					JCLib.getLog().error("Couldn't send a query: ", e);
 				} else {
 					connect();
 				}

@@ -26,14 +26,14 @@ import net.minecraftforge.fml.network.FMLNetworkConstants;
 public class JCLib {
 
 	public static final String MODID = "jclib";
-	public static final Logger log = LogManager.getLogger(JCLib.MODID);
+	private static final Logger log = LogManager.getLogger(JCLib.MODID);
 	public static final String VERSION = getModVersion();
-	public static boolean databaseInitialized = false;
-	public static Timer keepaliveTimer = new Timer();
+	private static boolean databaseInitialized = false;
+	static Timer keepaliveTimer = new Timer();
 	static HashMap<String, Boolean> shutdownState = new HashMap<String, Boolean>();
-	public static boolean keepaliveActivated = false;
+	private static boolean keepaliveActivated = false;
 	public static MySQL mysql;
-	public static JCLib instance;
+	private static JCLib instance;
 	
 	public JCLib() {
 		instance = this;
@@ -45,7 +45,7 @@ public class JCLib {
 	}
 	
 	public static void communicateLogin(String modid) {
-		JCLib.log.info(modid + " has been added to the tracking system");
+		JCLib.getLog().info(modid + " has been added to the tracking system");
 		shutdownState.put(modid, false);
 	}
 	
@@ -57,7 +57,7 @@ public class JCLib {
 				return;
 		}
 		
-		JCLib.log.info("MySQL service shut down");
+		JCLib.getLog().info("MySQL service shut down");
 		MySQL.close();
 		JCLib.keepaliveTimer.cancel();
 	}
@@ -76,13 +76,13 @@ public class JCLib {
 	
 	public static boolean connectMySQL() {
 		try {
-			JCLib.log.info("Attempting to connect to the MySQL database");
+			JCLib.getLog().info("Attempting to connect to the MySQL database");
 			databaseInitialized = true;
 			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
 			return true;
 		} catch (Exception e) {
 			databaseInitialized = false;
-			JCLib.log.error("Couldn't connect to the MySQL database: ", e);
+			JCLib.getLog().error("Couldn't connect to the MySQL database: ", e);
 		}
 		return false;
 	}
@@ -103,7 +103,7 @@ public class JCLib {
 	
 	public static boolean startKeepAlive(int minutes) {
 		if (!keepaliveActivated) {
-			JCLib.log.info("Activated keep-alive task");
+			JCLib.getLog().info("Activated keep-alive task");
 			keepaliveTimer.scheduleAtFixedRate(new KeepAlive(), minutes * 60 * 1000, minutes * 60 * 1000);
 			keepaliveActivated = true;
 			return true;
@@ -111,12 +111,20 @@ public class JCLib {
 		return false;
 	}
 	
+	public static Logger getLog() {
+		return log;
+	}
+	
+	public static boolean databaseInitialized() {
+		return databaseInitialized;
+	}
+
 	public static class KeepAlive extends TimerTask {
 		public void run() {
 			try {
 				MySQL.update("SELECT VERSION();");
 			} catch (ClassNotFoundException | SQLException e) {
-				JCLib.log.error("Couldn't keep-alive: ", e);
+				JCLib.getLog().error("Couldn't keep-alive: ", e);
 			}
 		}
 	}

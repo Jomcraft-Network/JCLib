@@ -20,8 +20,8 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-version = "1.15.2-1.0.4"
-def fileVersion = "1.0.4"
+version = "1.15.2-1.0.5"
+def fileVersion = "1.0.5"
 
 group= "net.jomcraft.jclib"
 ext.isReleaseVersion = project.hasProperty("isSonaType") ? isSonaType : false
