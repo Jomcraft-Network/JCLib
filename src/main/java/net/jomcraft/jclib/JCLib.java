@@ -77,10 +77,11 @@ public class JCLib {
 	public static boolean connectMySQL() {
 		try {
 			JCLib.log.info("Attempting to connect to the MySQL database");
-			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
 			databaseInitialized = true;
+			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
 			return true;
 		} catch (Exception e) {
+			databaseInitialized = false;
 			JCLib.log.error("Couldn't connect to the MySQL database: ", e);
 		}
 		return false;
