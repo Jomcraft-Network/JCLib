@@ -2,6 +2,9 @@ package net.jomcraft.jclib;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +27,8 @@ public class JCLib {
 	public static final Logger log = LogManager.getLogger(JCLib.MODID);
 	public static final String VERSION = getModVersion();
 	public static boolean databaseInitialized = false;
+	public static Timer keepaliveTimer = new Timer();
+	public static boolean keepaliveActivated = false;
 	public static MySQL mysql;
 	public static JCLib instance;
 	
@@ -48,16 +53,16 @@ public class JCLib {
 		}
 	}
 	
-	public static void connectMySQL() {
+	public static boolean connectMySQL() {
 		try {
 			
 			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
 			databaseInitialized = true;
-			
+			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		return false;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -72,5 +77,20 @@ public class JCLib {
 	
 	public static JCLib getInstance() {
 		return instance;
+	}
+	
+	public static boolean startKeepAlive(int minutes) {
+		if (!keepaliveActivated) {
+			keepaliveTimer.scheduleAtFixedRate(new KeepAlive(), minutes * 60 * 1000, minutes * 60 * 1000);
+			keepaliveActivated = true;
+			return true;
+		}
+		return false;
+	}
+	
+	public static class KeepAlive extends TimerTask {
+		public void run() {
+			MySQL.update("SELECT VERSION();");
+		}
 	}
 }
