@@ -64,7 +64,7 @@ public class JCLib {
 	
 	public void postInit(FMLLoadCompleteEvent event) {
 		if (ConfigFile.COMMON.only_server.get()) {
-			DistExecutor.safeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+			DistExecutor.unsafeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
 				if (ConfigFile.COMMON.connect.get())
 					JCLib.connectMySQL();
 			});
