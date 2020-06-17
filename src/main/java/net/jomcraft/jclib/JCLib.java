@@ -62,9 +62,10 @@ public class JCLib {
 		JCLib.keepaliveTimer.cancel();
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void postInit(FMLLoadCompleteEvent event) {
 		if (ConfigFile.COMMON.only_server.get()) {
-			DistExecutor.unsafeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+			DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
 				if (ConfigFile.COMMON.connect.get())
 					JCLib.connectMySQL();
 			});
@@ -75,16 +76,19 @@ public class JCLib {
 	}
 	
 	public static boolean connectMySQL() {
-		try {
-			JCLib.getLog().info("Attempting to connect to the MySQL database");
-			databaseInitialized = true;
-			mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
+		if (!databaseInitialized) {
+			try {
+				JCLib.getLog().info("Attempting to connect to the MySQL database");
+				mysql = new MySQL(ConfigFile.COMMON.hostIP.get(), ConfigFile.COMMON.database.get(), ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
+				databaseInitialized = true;
+				return true;
+			} catch (Exception e) {
+				JCLib.getLog().error("Couldn't connect to the MySQL database: ", e);
+			}
+			return false;
+		} else {
 			return true;
-		} catch (Exception e) {
-			databaseInitialized = false;
-			JCLib.getLog().error("Couldn't connect to the MySQL database: ", e);
 		}
-		return false;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -96,9 +100,15 @@ public class JCLib {
 
 		return ((ArrayList<CommentedConfig>) file.get("mods")).get(0).get("version");
 	}
-	
-	public static JCLib getInstance() {
-		return instance;
+
+	public static class KeepAlive extends TimerTask {
+		public void run() {
+			try {
+				MySQL.update("SELECT VERSION();");
+			} catch (ClassNotFoundException | SQLException e) {
+				JCLib.getLog().error("Couldn't keep-alive: ", e);
+			}
+		}
 	}
 	
 	public static boolean startKeepAlive(int minutes) {
@@ -111,21 +121,18 @@ public class JCLib {
 		return false;
 	}
 	
+	public static JCLib getInstance() {
+		return instance;
+	}
+	
 	public static Logger getLog() {
 		return log;
 	}
 	
+	/**
+     * @deprecated Using this method is no longer necessary.
+     */
 	public static boolean databaseInitialized() {
 		return databaseInitialized;
-	}
-
-	public static class KeepAlive extends TimerTask {
-		public void run() {
-			try {
-				MySQL.update("SELECT VERSION();");
-			} catch (ClassNotFoundException | SQLException e) {
-				JCLib.getLog().error("Couldn't keep-alive: ", e);
-			}
-		}
 	}
 }
