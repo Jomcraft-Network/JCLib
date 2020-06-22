@@ -14,7 +14,7 @@ public class ConfigFile {
 
 		public final ForgeConfigSpec.ConfigValue<String> hostIP;
 		
-		public final ForgeConfigSpec.BooleanValue connect;
+		//public final ForgeConfigSpec.BooleanValue connect;
 		
 		public final ForgeConfigSpec.BooleanValue only_server;
 		
@@ -24,7 +24,7 @@ public class ConfigFile {
 		
 		public final ForgeConfigSpec.ConfigValue<String> port;
 		
-		public final ForgeConfigSpec.ConfigValue<String> database;
+		//public final ForgeConfigSpec.ConfigValue<String> database;
 
 		Common(ForgeConfigSpec.Builder builder) {
 
@@ -33,8 +33,8 @@ public class ConfigFile {
 			String desc = "MariaDB server host ip";
 			hostIP = builder.comment(desc).define("hostIP", "localhost");
 			
-			desc = "Should the server connect to the database on startup?";
-			connect = builder.comment(desc).define("connect", false);
+			//desc = "Should the server connect to the database on startup?";
+			//connect = builder.comment(desc).define("connect", false);
 			
 			desc = "Connect on the client-side? (Better do not deactivate this field)";
 			only_server = builder.comment(desc).define("only_server", true);
@@ -48,8 +48,8 @@ public class ConfigFile {
 			desc = "MariaDB server port";
 			port = builder.comment(desc).define("port", "3306");
 			
-			desc = "MariaDB database name";
-			database = builder.comment(desc).define("database", "JCLib");
+			//desc = "MariaDB database name";
+			//database = builder.comment(desc).define("database", "JCLib");
 
 			builder.pop();
 		}
