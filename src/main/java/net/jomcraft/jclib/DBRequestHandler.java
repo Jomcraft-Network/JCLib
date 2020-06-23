@@ -1,6 +1,6 @@
 package net.jomcraft.jclib;
 
-interface DBRequestHandler {
+public interface DBRequestHandler {
 	
 	public DBRequestHandler establishCon(MySQL connection);
 	
