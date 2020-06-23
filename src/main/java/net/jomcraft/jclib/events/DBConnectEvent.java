@@ -1,8 +1,8 @@
 package net.jomcraft.jclib.events;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.Event.Result;
 
-public class DBConnectEvent extends Event {
+public class DBConnectEvent {
 	
     private final String databaseName;
     private final Result result;
@@ -15,15 +15,8 @@ public class DBConnectEvent extends Event {
     public String getDBName() {
     	return this.databaseName;
     }
-    
-    @Override
+
     public Result getResult() {
     	return this.result;
     }
-    
-    @Override
-    public boolean isCancelable() {
-    	return false;
-    }
-
 }

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
+import com.google.common.eventbus.EventBus;
 import net.jomcraft.jclib.events.DBConnectEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -22,6 +23,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
 
 @Mod(value = JCLib.MODID)
@@ -33,6 +35,7 @@ public class JCLib {
 	static Timer keepaliveTimer = new Timer();
 	static HashMap<String, Boolean> shutdownState = new HashMap<String, Boolean>();
 	private static boolean keepaliveActivated = false;
+	public static EventBus eventBus = new EventBus();
 	private static HashMap<String, String> connectionRequests = new HashMap<String, String>();
 	private static HashMap<String, MySQL> databases = new HashMap<String, MySQL>();
 	private static JCLib instance;
@@ -42,6 +45,7 @@ public class JCLib {
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigFile.COMMON_SPEC);
 		MinecraftForge.EVENT_BUS.register(new EventHandlers());
 		final String any = FMLNetworkConstants.IGNORESERVERONLY;
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> any, (test2, test) -> true));
 	}
 	
@@ -92,13 +96,14 @@ public class JCLib {
 	
 	public static MySQL connectMySQL(String dbName) {
 		try {
-			JCLib.getLog().info("Attempting to connect to the MySQL database");
+			JCLib.getLog().info("Attempting to connect to the MySQL database: " + dbName);
 			MySQL connection = new MySQL(ConfigFile.COMMON.hostIP.get(), dbName, ConfigFile.COMMON.username.get(), ConfigFile.COMMON.password.get());
-			MinecraftForge.EVENT_BUS.post(new DBConnectEvent(dbName, Event.Result.ALLOW));
+			JCLib.eventBus.post(new DBConnectEvent(dbName, Event.Result.ALLOW));
+			
 			return connection;
 		} catch (Exception e) {
-			MinecraftForge.EVENT_BUS.post(new DBConnectEvent(dbName, Event.Result.DENY));
 			JCLib.getLog().error("Couldn't connect to the MySQL database: ", e);
+			JCLib.eventBus.post(new DBConnectEvent(dbName, Event.Result.DENY));
 			return null;
 		}
 	}
