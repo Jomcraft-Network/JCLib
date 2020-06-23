@@ -121,7 +121,12 @@ public class JCLib {
 	public static class KeepAlive extends TimerTask {
 		public void run() {
 			try {
-				databases.get(JCLib.MODID).update("SELECT VERSION();");
+				if(databases.containsKey(JCLib.MODID)) {
+					databases.get(JCLib.MODID).update("SELECT VERSION();");
+				} else if(databases.size() > 0) {
+					databases.values().iterator().next().update("SELECT VERSION();");
+				}
+				
 			} catch (ClassNotFoundException | SQLException e) {
 				JCLib.getLog().error("Couldn't keep-alive: ", e);
 			}
