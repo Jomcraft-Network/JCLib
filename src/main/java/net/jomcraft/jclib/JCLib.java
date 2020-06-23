@@ -126,7 +126,7 @@ public class JCLib {
 		public void run() {
 			if(requestHandlers.containsKey(JCLib.MODID)) {
 				requestHandlers.get(JCLib.MODID).sendVoidQuery("SELECT VERSION();");
-			} else if(requestHandlers.size() > 1) {
+			} else if(requestHandlers.size() > 0) {
 				requestHandlers.values().iterator().next().sendVoidQuery("SELECT VERSION();");
 			}
 		}
