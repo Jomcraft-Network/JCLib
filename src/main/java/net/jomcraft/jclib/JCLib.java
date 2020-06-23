@@ -1,7 +1,6 @@
 package net.jomcraft.jclib;
 
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -36,8 +35,9 @@ public class JCLib {
 	static HashMap<String, Boolean> shutdownState = new HashMap<String, Boolean>();
 	private static boolean keepaliveActivated = false;
 	public static EventBus eventBus = new EventBus();
-	private static HashMap<String, String> connectionRequests = new HashMap<String, String>();
-	private static HashMap<String, MySQL> databases = new HashMap<String, MySQL>();
+	private static HashMap<String, ConnectionRequest> connectionRequests = new HashMap<String, ConnectionRequest>();
+	private static HashMap<String, DBRequestHandler> requestHandlers = new HashMap<String, DBRequestHandler>();
+	static MySQL mysql;
 	private static JCLib instance;
 	
 	public JCLib() {
@@ -61,8 +61,8 @@ public class JCLib {
 			if(state == false)
 				return;
 		}
-		
-		databases.values().forEach(db -> db.close());
+		JCLib.getLog().info("Sent shutdown request to child handlers");
+		requestHandlers.values().forEach(db -> db.shutdown());
 		JCLib.getLog().info("MySQL service shut down");
 		JCLib.keepaliveTimer.cancel();
 	}
@@ -71,24 +71,28 @@ public class JCLib {
 	public void postInit(FMLLoadCompleteEvent event) {
 		if (ConfigFile.COMMON.only_server.get()) {
 			DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
-				connectionRequests.put(JCLib.MODID, "JCLib");
-				for(Entry<String, String> db : connectionRequests.entrySet()) {
+				connectionRequests.put(JCLib.MODID, new ConnectionRequest("JCLib", new JCLibConnectionRequest()));
+				for(Entry<String, ConnectionRequest> db : connectionRequests.entrySet()) {
 					String modid = db.getKey();
-					String database = db.getValue();
-					MySQL connection = connectMySQL(database);
-					if(connection != null)
-						databases.put(modid, connection);
+					ConnectionRequest request = db.getValue();
+					MySQL connection = connectMySQL(request.getDbName());
+					if(connection != null) {
+						DBRequestHandler handler = request.getHandler().establishCon(connection);
+						requestHandlers.put(modid, handler);
+					}
 				}
 				connectionRequests.clear();
 			});
 		} else {
-			connectionRequests.put(JCLib.MODID, "JCLib");
-			for(Entry<String, String> db : connectionRequests.entrySet()) {
+			connectionRequests.put(JCLib.MODID, new ConnectionRequest("JCLib", new JCLibConnectionRequest()));
+			for(Entry<String, ConnectionRequest> db : connectionRequests.entrySet()) {
 				String modid = db.getKey();
-				String database = db.getValue();
-				MySQL connection = connectMySQL(database);
-				if(connection != null)
-					databases.put(modid, connection);
+				ConnectionRequest request = db.getValue();
+				MySQL connection = connectMySQL(request.getDbName());
+				if(connection != null) {
+					DBRequestHandler handler = request.getHandler().establishCon(connection);
+					requestHandlers.put(modid, handler);
+				}
 			}
 			connectionRequests.clear();
 		}
@@ -102,7 +106,7 @@ public class JCLib {
 			
 			return connection;
 		} catch (Exception e) {
-			JCLib.getLog().error("Couldn't connect to the MySQL database: ", e);
+			JCLib.getLog().error("Couldn't connect to the MySQL database " + dbName + ": ", e);
 			JCLib.eventBus.post(new DBConnectEvent(dbName, Event.Result.DENY));
 			return null;
 		}
@@ -120,15 +124,10 @@ public class JCLib {
 
 	public static class KeepAlive extends TimerTask {
 		public void run() {
-			try {
-				if(databases.containsKey(JCLib.MODID)) {
-					databases.get(JCLib.MODID).update("SELECT VERSION();");
-				} else if(databases.size() > 0) {
-					databases.values().iterator().next().update("SELECT VERSION();");
-				}
-				
-			} catch (ClassNotFoundException | SQLException e) {
-				JCLib.getLog().error("Couldn't keep-alive: ", e);
+			if(requestHandlers.containsKey(JCLib.MODID)) {
+				requestHandlers.get(JCLib.MODID).sendVoidQuery("SELECT VERSION();");
+			} else if(requestHandlers.size() > 1) {
+				requestHandlers.values().iterator().next().sendVoidQuery("SELECT VERSION();");
 			}
 		}
 	}
@@ -143,13 +142,13 @@ public class JCLib {
 		return false;
 	}
 	
-	public static HashMap<String, MySQL> getDatabases() {
-		return databases;
+	public static void putConnectionRequest(String modid, ConnectionRequest request) {
+		if(!connectionRequests.containsKey(modid))
+			connectionRequests.put(modid, request);
 	}
 	
-	public static void putConnectionRequest(String modid, String dbName) {
-		if(!connectionRequests.containsKey(modid))
-			connectionRequests.put(modid, dbName);
+	public static HashMap<String, DBRequestHandler> getRequestHandlers() {
+		return requestHandlers;
 	}
 	
 	public static JCLib getInstance() {
