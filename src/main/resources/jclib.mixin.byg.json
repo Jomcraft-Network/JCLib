@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "package": "net.jomcraft.jclib.bygmixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "jclib.refmap.json",
+  "mixins": [
+		"MixinBYGTerraBlenderRegion"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}

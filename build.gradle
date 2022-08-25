@@ -1,0 +1,199 @@
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+		maven { url = 'https://repo.spongepowered.org/maven' }
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+		classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'eclipse'
+
+version = "1.18.x-1.5.0"
+
+def fileVersion = "1.5.0"
+group = "net.jomcraft.jclib"
+
+archivesBaseName = "JCLib"
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
+
+minecraft {
+    mappings channel: 'official', version: '1.18.2'
+
+	runs {
+        client {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            property 'forge.logging.console.level', 'debug'
+			
+			property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+            
+			arg "-mixin.config="+"jclib.mixin.byg.json"
+			
+            arg "-mixin.config="+"jclib.mixin.json"
+
+            mods {
+                jclib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            property 'forge.logging.console.level', 'debug'
+
+			properties 'mixin.env.remapRefMap': 'true'
+			
+            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+            
+			arg "-mixin.config="+"jclib.mixin.byg.json"
+			
+            arg "-mixin.config="+"jclib.mixin.json"
+
+            mods {
+                jclib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            property 'forge.logging.console.level', 'debug'
+            
+            properties 'mixin.env.remapRefMap': 'true'
+            
+            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+
+            args '--mod', 'jclib', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            mods {
+                jclib {
+                    source sourceSets.main
+                }
+            }
+        }
+		accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+mixin {
+    add sourceSets.main, "jclib.refmap.json"
+}
+
+repositories {
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.18.2-40.1.68'
+	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+	testAnnotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+	implementation fg.deobf("curse.maven:tbf-563928:3725996")
+	implementation fg.deobf("curse.maven:byg-247560:3868886")
+	implementation fg.deobf("curse.maven:man-74924:3829975")
+	implementation fg.deobf("curse.maven:tkc-74072:3829979")
+}
+
+def forge_version = "40.0.0"
+
+processResources {
+
+	duplicatesStrategy = 'include'
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'META-INF/mods.toml'
+
+        expand 'version': fileVersion, 'forge_version': forge_version
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'META-INF/mods.toml'
+    }
+}
+
+jar {
+    
+	manifest {
+		attributes([
+			"Specification-Title": "JCLib",
+			"Specification-Vendor": "Jomcraft Network",
+			"Specification-Version": fileVersion,
+			"Implementation-Title": "JCLib",
+			"Implementation-Version": fileVersion,
+			"Implementation-Vendor" : "Jomcraft Network",
+			"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            "MixinConfigs" : "jclib.mixin.json, jclib.mixin.byg.json"
+		])
+	}
+
+}
+
+task sourcesJar(type: Jar) {
+	
+	from sourceSets.main.allSource
+	classifier = 'sources'
+}
+
+task deobfJar(type: Jar) {
+	
+	from sourceSets.main.output
+	classifier = 'deobf'
+}
+
+artifacts {
+	archives jar
+	archives sourcesJar
+	archives deobfJar
+}
+
+curseforge {
+	if(System.getenv("CURSE_API") != null && !System.getenv("CURSE_API").equals("")) {
+		apiKey = System.getenv("CURSE_API")
+		project {
+			id = '389876'
+			releaseType = 'release'
+			addGameVersion '1.18.2'
+			mainArtifact(jar) {
+				displayName = "$archivesBaseName-$version"
+			}
+    
+			addArtifact (sourcesJar) {
+				releaseType = 'release'
+				displayName = "$archivesBaseName-$version-sources"
+			}
+    
+			addArtifact (deobfJar) {
+				releaseType = 'release'
+				displayName = "$archivesBaseName-$version-deobf"
+			}
+		}
+	}
+}

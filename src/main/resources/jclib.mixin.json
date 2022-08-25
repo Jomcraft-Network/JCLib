@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "net.jomcraft.jclib.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "jclib.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+		"MixinMultiPlayerGameMode"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}

@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[40,)"
+license="Apache License 2.0"
+
+[[mods]] 
+	modId="jclib" 
+	version="${version}" 
+	displayName="JCLib"
+	description='''JCLib is the default library the projects developed by the Jomcraft Network team use. As a consequence it does nothing on it's own, though is required by certain other mods.'''
+	side="SERVER"
+	authors="Jomcraft Network"
+	credits="Developed by Jomcraft Network 2022"
+
+[[dependencies.jclib]]
+    modId="forge"
+    mandatory=true
+    versionRange="[${forge_version},)"
+    ordering="NONE"
+    side="BOTH"
+    
+[[dependencies.jclib]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.18,]"
+    ordering="NONE"
+    side="BOTH"
